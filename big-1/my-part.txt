@@ -1,0 +1,377 @@
+%——————————————————————————————————————
+\section{二值、灰度图像的叠像术}
+
+\subsection{实验原理}
+
+\paragraph{叠像术其实是更为高级的可视密码学技术。此技术可以讲原先图像的信息分存到另外两张有具体信息的图像中，并且因为另外两张图像有具体图像，不再是杂乱无章的信息，可以对原始图像有更好的隐藏效果，我们在这里对其进行简单复现，选取的图像为皮卡丘和哆啦A梦，这也是大家童年所熟知的人物形象。}
+
+
+\paragraph{在对灰度图像处理之前，首先需要了解连续调图像。连续调图像通常指在一幅图像上，其由淡到浓或由浅到深的色调变化是以单位面积成像物质颗粒密度来构成的，其深浅、浓淡是呈现无极变化的。在本次实验中二值图像直接按照原先的处理办法对图片进行分解，将其分解到两张有意义的图像中即可。}
+
+\paragraph{半色调图像通常是指经过特殊加工后的印刷品上的由浅到深或由淡到浓的色调变化是由网点大小来表现的，由于网点在空间上是有一定距离而呈离散型分布的，并且由于加网的级数总有一定的限制，在图像的层次变化上是不能象连续调图像一样实现无极变化，故称为半色调图像。}
+
+
+\subsection{基本思想}
+
+\paragraph{人的视觉系统有这样的特性：人眼对物体表面颜色浓淡变化的敏感度远远超过颜色本身。半色调技术正是利用人眼的这一特点，通过黑点的疏密来模拟颜色的浓淡，从而实现将灰度图像转换为黑白图像。随后按照处理二值黑白图像的处理办法对其进行分解，分别将信息存储到两张有益的图片中即可。}
+
+\paragraph{本次试验中主要采用的是误差扩散法，先阈值量化图像像素，然后将图像量化过程中产生的误差分配给周围像素点。利用这种方法所生成的半色调图像能够比较忠实地反映图像的灰度层次过渡。灰度图像是具有多个灰度等级层次丰富的连续调图像，每个像素点用8比特表示，取值为0～255。}
+
+
+
+\subsection{计算公式}
+
+\paragraph{如果输入的像素值小于等于127（比较接近黑色），则输出0（黑色)；如果输出的像素值大于127（比较接近白色），则输出255（白色)}
+
+
+
+
+
+按照下式计算误差：
+
+
+\textbf{误差 = 输入像素值 - 输出}
+
+
+
+
+\subsection{实验代码}
+
+\subsubsection{黑白图像}
+
+首先是黑白二值图像处理部分的代码，如下所示：
+
+\begin{lstlisting}[title=黑白图像,frame=trbl,language={MatLab}]
+clear;
+[A,M] = imread('fig1.jpg', 'jpg');
+figure('name','原图');
+imshow(A);
+
+[B1,N1] = imread('fig2.jpg', 'jpg');
+figure('name','伪装1');
+imshow(B1);
+
+[B2,N2] = imread('fig3.jpg', 'jpg');
+figure('name','伪装2');
+imshow(B2);
+
+bw = im2bw(A);
+figure('name','二值');
+imshow(bw);
+imwrite(bw,'bw.bmp');%二值图
+
+bw1 = im2bw(B1);
+figure('name','二值1');
+imshow(bw1);
+imwrite(bw1,'w1.bmp');%伪装二值图1
+
+bw2 = im2bw(B2);
+figure('name','二值2');
+imshow(bw2);
+imwrite(bw2,'w2.bmp');%伪装二值图2
+
+[ C1,C2 ] = decwithimg( bw,bw1,bw2 );% 利用自定义函数decwithimg()分解得到有伪装的子图
+
+figure('name','z1');
+imshow(C1);
+imwrite(C1,'z1.bmp');% 带伪装子图一
+
+figure('name','z2');
+imshow(C2);
+imwrite(C2,'z2.bmp');% 带伪装子图二
+
+D = C1.*C2;% 两张图像叠加还原，应该用乘法。
+
+figure('name','origin');
+imshow(D);
+imwrite(D,'origin.bmp');% 恢复图片
+\end{lstlisting}
+
+\subsubsection{灰度图像}
+
+其次是灰度图像处理部分的代码，如下所示：
+
+\begin{lstlisting}[title=灰度图像,frame=trbl,language={MatLab}]
+clear;
+[A,M] = imread('fig1.jpg', 'jpg');
+figure('name','原图');
+imshow(A);
+
+[B1,N1] = imread('fig2.jpg', 'jpg');
+figure('name','伪装1');
+imshow(B1);
+
+[B2,N2] = imread('fig3.jpg', 'jpg');
+figure('name','伪装2');
+imshow(B2);
+
+gray = rgb2gray(A);
+gray=double(gray)/255;%把矩阵由UNIT8转换为实型  
+gray1 = rgb2gray(B1);
+gray1=double(gray1)/255;%把矩阵由UNIT8转换为实型  
+gray2 = rgb2gray(B2);
+gray2=double(gray2)/255;%把矩阵由UNIT8转换为实型  
+
+bsd = im2hf(gray);
+figure('name','原图半色调');
+imshow(bsd);
+imwrite(bsd,'bsd.bmp');%原图半色调
+
+bsd1 = im2hf(gray1);
+figure('name','伪装半色调1');
+imshow(bsd1);
+imwrite(bsd1,'w1.bmp');%伪装半色调1
+
+bsd2 = im2hf(gray2);
+figure('name','伪装半色调2');
+imshow(bsd2);
+imwrite(bsd2,'w2.bmp');%伪装半色调1
+
+[ C1,C2 ] = decwithimg( bsd,bsd1,bsd2 );% 利用自定义函数decwithimg()分解得到有伪装的子图
+
+figure('name','z1');
+imshow(C1);
+imwrite(C1,'z1.bmp');% 带伪装子图一
+
+figure('name','z2');
+imshow(C2);
+imwrite(C2,'z2.bmp');% 带伪装子图二
+
+D = C1.*C2;% 两张图像叠加还原，应该用乘法。
+
+figure('name','origin');
+imshow(D);
+imwrite(D,'origin.bmp');% 恢复图片
+\end{lstlisting}
+
+
+\subsubsection{图像分解}
+
+接下来是其中引用到的函数decwithimg，此函数主要实现的是分解黑白二值图为两张有意义子图，如下所示：
+
+
+\begin{lstlisting}[title=图像分解,frame=trbl,language={MatLab}]
+function [ C1,C2 ] = decwithimg( bw,bw1,bw2 ) 
+
+for i = 1:256
+    for j = 1:256
+        if bw(i,j) == 0
+            if bw1(i,j) == 0 && bw2(i,j) == 0
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end  
+            elseif bw1(i,j) == 1 && bw2(i,j) == 0
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end
+            elseif bw1(i,j) == 0 && bw2(i,j) == 1
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 1;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end
+            else
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 1;
+                end
+            end
+        else
+            if bw1(i,j) == 0 && bw2(i,j) == 0
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+            elseif bw1(i,j) == 1 && bw2(i,j) == 0
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+            elseif bw1(i,j) == 0 && bw2(i,j) == 1
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+            else
+                random_zyl_num = randi([0 3]);
+                if(random_zyl_num==0)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 0;C1(2*i-1,2*j) = 1;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 0;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==1)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 1;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 0;
+                end
+                if(random_zyl_num==2)
+                    C1(2*i-1,2*j-1) = 0;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 1;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 0;C2(2*i,2*j) = 1;
+                end
+                if(random_zyl_num==3)
+                    C1(2*i-1,2*j-1) = 1;C1(2*i,2*j-1) = 1;C1(2*i-1,2*j) = 0;C1(2*i,2*j) = 0;
+                    C2(2*i-1,2*j-1) = 1;C2(2*i,2*j-1) = 0;C2(2*i-1,2*j) = 1;C2(2*i,2*j) = 0;
+                end
+            end
+        end
+    end
+end
+
+end
+\end{lstlisting}
+
+
+\subsubsection{半色调处理}
+
+接下来是在灰度图像处理部分引用到的函数im2hf，此函数主要实现的是将灰度图像进行半色调的处理，如下所示：
+
+\begin{lstlisting}[title=半色调处理,frame=trbl,language={MatLab}]
+function [ I ] = im2hf( B )
+
+a = 7 / 16;  
+b = 3 / 16;  
+c = 5 / 16;  
+d = 1 / 16;%定义误差分配规则  
+  
+for i=1:256%对每行进行处理  
+    for j=1:256%对每列进行处理  
+        if B(i,j)<1/2%进行阈值比较  
+            I(i,j) = 0;  
+        else  
+            I(i,j) = 1;  
+        end  
+        if j>1&&j<256&&i<256
+            wc=(B(i,j)-I(i,j));%定义误差  
+            B(i,j+1)=B(i,j+1)+wc*a;  
+            B(i+1,j-1)=B(i+1,j-1)+wc*b;  
+            B(i+1,j)=B(i+1,j)+wc*c;  
+            B(i+1,j+1)=B(i+1,j+1)+wc*d;%误差分配  
+        end
+    end  
+end  
+
+end
+\end{lstlisting}
+
+
+
+\subsection{实验结果}
+
+
+首先是黑白二值图像的分解结果：
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{bw-zyl.png}
+    \caption{黑白二值图像}
+    \label{fig:33}
+\end{figure}
+
+
+
+
+其次是灰度图像的分解结果：
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{gray-zyl.png}
+    \caption{灰度图像}
+    \label{fig:34}
+\end{figure}
+
+
+
+\textbf{由实验结果可以看出本次实验成功完成对黑白二值图像以及灰度图像叠像术的复现}
